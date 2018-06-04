@@ -1,5 +1,5 @@
 import numpy as np
-
+import math
 
 class NeuralNet():
 
@@ -13,25 +13,35 @@ class NeuralNet():
 
 		# output data to help evaluate the neural network
 
+		# make sure random number is the same for testing 
 		np.random.seed(1)
+
+		#create a np array of the input 
 		self.input = np.array(input_data)
+		#create a np array of the output
 		self.outputs = np.array(outputs_data)
 		
+		#need to add input layer into neuron layer
 		neuron_list = [self.input.shape[1]] + neurons
-		# -1 to add a weight into each one
+		
+		#create a matrix array for each layer with weigths
 		self.weights = [2*np.random.random((neuron_list[x], neuron_list[x+1]))- 1 for x in range(3)]
+		self.bias = [1,2,3]
 
 
-	''' activation functions to help normalize the sums '''
+	''' activation functions to fire the neuron'''
 	def sigmoid(self, x):
 		return 1 / (1 + np.exp(-x))
+
 
 	def sigmoid_derivative(self,x):
 		return x * (1-x)
 
 	def feedForward(self, input):
 		''' feed forward the data to train the neural net'''
+		#put the inputs into the input layer
 		input_layer = self.input
+		# sigmoid (the dot product of the input layer and the weights) do this for each layer using the previous layer
 		hidden_layer1 = self.sigmoid(np.dot(input_layer,self.weights[0]))
 		hidden_layer2 = self.sigmoid(np.dot(hidden_layer1,self.weights[1]))
 		output_layer = self.sigmoid(np.dot(hidden_layer2,self.weights[2]))
@@ -41,8 +51,9 @@ class NeuralNet():
 	def backPropagation(self,input_layer,hidden_layer1,hidden_layer2, output_layer,output_error,learning_rate):
 		''' gets the each error on the layer and feed it backwards to readjust the neurons'''
 		
-		#checks how far off we are from the target
+		#checks how far off we are from the target starting with the output layer
 		output_delta = output_error * self.sigmoid_derivative(output_layer)
+		# see how mmuch that delta contribute to the error from the next layer. Does this for each layer going backwards
 		hiddenL2_error = output_delta.dot(self.weights[2].T)
 		hiddenL2_delta = hiddenL2_error * self.sigmoid_derivative(hidden_layer2)
 		hiddenL1_error = hiddenL2_delta.dot(self.weights[1].T)
@@ -66,19 +77,23 @@ class NeuralNet():
 		return output_layer
 
 
-	def train(self, learning_rate = 1, epochs = 60000, early_stopping = False):
+	def train(self, learning_rate = .5, epochs = 60000, early_stopping = False):
 		''' trains the neural network'''
-
+		# boolean to see if active
 		stopping = early_stopping
+		# intialize it
 		previous_error = 100
+		#counter for how many times it got worst
 		counter = 0
 
-		# does a gradient descent
-		for train_count in range(0,epochs):
+		# trains the model 
+		for train_count in range(0,epochs): # epochs is the range of training amount
 			# feed the data forward the neural network
 			input_layer, hidden_layer1, hidden_layer2, output_layer = self.feedForward(self.input)
-			output_error = output_layer - self.outputs
+			# check the difference of error rate
+			output_error = (self.outputs- output_layer)
 
+			#to display the error rate of every 10000 
 			if (train_count % 10000) == 0:
 				print("Epochs "+str(train_count)+"/"+str(epochs)+" Current Neural Network Error :"+str(np.mean(np.abs(output_error))))
 				if(str(np.mean(np.abs(output_error))) < previous_error):
@@ -99,21 +114,9 @@ class NeuralNet():
 
 
 if __name__ == "__main__":
-	nNet = NeuralNet([4,3,1],[[0,1,0],[1,0,1],[0,1,0],[1,1,1]],[[0],[0],[0],[1]])
+	# initialze the Neural Network object
+	nNet = NeuralNet([10,4,1],[[1,1,1],[0,1,0],[1,0,1],[0,1,0]],[[1],[0],[0],[0]])
+	# train it
 	nNet.train()
-	print(nNet.predict([1,1,0]))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	# predit this series.
+	print(nNet.predict([1,1,1]))
